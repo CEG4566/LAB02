@@ -93,7 +93,7 @@ void StartTask02(void *argument);
 /* USER CODE BEGIN 0 */
 uint32_t sensorValue = 0;
 float fvoltage = 0;
-int msg[100];
+char msg[100];
 
 int uart2_write(int ch)
 {
@@ -437,34 +437,21 @@ void StartTask01(void *argument)
   for(;;)
   {
 	  /*1. Start ADC */
+    if( xSemaphoreTake( xBinarySemaphore1, ( TickType_t ) 100 ) == pdTRUE )
+    {
+      HAL_ADC_Start(&hadc1);
 
-	  	 if( xSemaphoreTake( xBinarySemaphore1, ( TickType_t ) 100 ) == pdTRUE )
-	  	        {
-	  	 HAL_ADC_Start(&hadc1);
+      /* Poll for conversion */
+      HAL_ADC_PollForConversion(&hadc1,1);
 
+      /* Get conversion */
+      sensorValue = HAL_ADC_GetValue(&hadc1);
+      fvoltage = (float)sensorValue * (3.3/4095.0);
 
-	  	 /* Poll for conversion */
-	  	 HAL_ADC_PollForConversion(&hadc1,1);
+      sprintf(msg, "%.1f V\r\n", fvoltage); //One digit after comma
 
-	  	 /* Get conversion */
-	  	 sensorValue = HAL_ADC_GetValue(&hadc1);
-	  	 fvoltage = (float)sensorValue * (3.3/4095.0);
-
-	     sprintf(msg, "%.1f V\r\n", fvoltage);
-
-	  	 if (xBinarySemaphore1 != NULL) {
-	  		 char msg2[4];
-	  		 sprintf(msg2, "hi2");
-	 		HAL_UART_Transmit(&huart2, (uint8_t*)msg2, strlen(msg2), HAL_MAX_DELAY);
-
-	  	 } else {
-
-	  	 }
-		  	xSemaphoreGive(xBinarySemaphore2);
-
-
-	  	        }
-
+      xSemaphoreGive(xBinarySemaphore2);
+    }
   }
   /* USER CODE END 5 */
 }
@@ -483,16 +470,17 @@ void StartTask02(void *argument)
   for(;;)
   {
 	 	 if( xSemaphoreTake( xBinarySemaphore2, ( TickType_t ) 100 ) == pdTRUE )
-	  	 {
-		SSD1306_GotoXY (0, 30);
+     {
+        SSD1306_GotoXY (0, 30);
 
-		HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+        HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
 
-		SSD1306_Puts(msg, &Font_16x26, 1);
-		SSD1306_UpdateScreen();
+        SSD1306_Puts(msg, &Font_16x26, 1);
+        
+        SSD1306_UpdateScreen();
 
-		xSemaphoreGive(xBinarySemaphore1);
-	  	 }
+        xSemaphoreGive(xBinarySemaphore1);
+     }
   }
   /* USER CODE END StartTask01 */
 }
