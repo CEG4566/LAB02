@@ -469,15 +469,16 @@ void StartTask02(void *argument)
   /* Infinite loop */
   for(;;)
   {
+    // Try to take the semaphore xBinarySemaphore2. Wait for up to 100 ticks.
 	 	 if( xSemaphoreTake( xBinarySemaphore2, ( TickType_t ) 100 ) == pdTRUE )
      {
         SSD1306_GotoXY (0, 30);
 
-        HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+        HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY); // Transmit the 'msg' string via UART
 
-        SSD1306_Puts(msg, &Font_16x26, 1);
-        
-        SSD1306_UpdateScreen();
+        SSD1306_Puts(msg, &Font_16x26, 1); // Display 'msg' on the OLED with specified font and size
+
+        SSD1306_UpdateScreen(); // Refresh the OLED display to show the new text
 
         xSemaphoreGive(xBinarySemaphore1);
      }
